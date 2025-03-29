@@ -69,7 +69,7 @@ export const login = async(req, res) => {
             return res.status(401).json({
                 message: "Incorrect email or password",
                 success: false,
-                user
+                // user
             });
         }
         const token = await jwt.sign({userId:user._id}, process.env.SECRET_KEY,{expiresIn: '1d'});
@@ -81,6 +81,7 @@ export const login = async(req, res) => {
         console.log(error);
     } 
 };
+
 export const logout = async(req, res) => {
     try{
         return res.cookie("token", "", {maxAge: 0}).json({
@@ -91,6 +92,7 @@ export const logout = async(req, res) => {
         console.log(error);
     }
 };
+
 export const getProfile = async(req, res) => {
     try{
         const userId = req.params.id;
@@ -103,6 +105,7 @@ export const getProfile = async(req, res) => {
         console.log(error);
     }
 };
+
 export const editProfile = async(req, res) => {
     try{
         const userId = req.id;
@@ -138,7 +141,8 @@ export const editProfile = async(req, res) => {
 
 export const getSuggestedUsers = async (req, res) => {
     try{
-        const suggestedUsers = await User.find({_id:{$ne:req.id}}).select("password");
+        const suggestedUsers = await User.find({_id:{$ne:req.id}}).select("-password");
+
         if(!suggestedUsers){
             return res.status(400).json({
                 message:'Currently do not have any users',
@@ -177,20 +181,20 @@ export const followOrUnfollow = async (req,res) => {
             await Promise.all([
                 User.updateOne({_id:follower}, {$pull:{following:followee}}),
                 User.updateOne({_id:followee}, {$pull:{followers:follower}}),
-            ])
+            ]);
             return res.status(200).json({
                 message:"Unfollow Successfully",
                 success:true
-            })
+            });
         } else {
             await Promise.all([
                 User.updateOne({_id:follower}, {$push:{following:followee}}),
                 User.updateOne({_id:followee}, {$push:{followers:follower}}),
-            ])
+            ]);
             return res.status(200).json({
-                message:"Unfollow Successfully",
+                message:"Followed Successfully",
                 success:true
-            })
+            });
         }
     }
     catch(error) {
