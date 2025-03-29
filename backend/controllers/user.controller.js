@@ -136,3 +136,65 @@ export const editProfile = async(req, res) => {
     }
 };
 
+export const getSuggestedUsers = async (req, res) => {
+    try{
+        const suggestedUsers = await User.find({_id:{$ne:req.id}}).select("password");
+        if(!suggestedUsers){
+            return res.status(400).json({
+                message:'Currently do not have any users',
+            })
+        };
+        return res.status(200).json({
+            success:true,
+            users:suggestedUsers
+        })
+    } catch(error) {
+        console.log(error);
+    }
+};
+
+export const followOrUnfollow = async (req,res) => {
+    try{
+        const follower = req.id;
+        const followee = req.params.id;
+        if(follower === followee){
+            return res.status(400).json({
+                message:'You can;t follow or unfollow yourself',
+                success:false
+            });
+        }
+        const user = await User.findById(follower);
+        const targetUser = await User.findById(followee);
+        if(!user || !targetUser){
+            return res.status(400).json({
+                message:'User not found',
+                success:false
+            });
+        }
+
+        const isFollowing = user.following.includes(followee);
+        if(isFollowing){
+            await Promise.all([
+                User.updateOne({_id:follower}, {$pull:{following:followee}}),
+                User.updateOne({_id:followee}, {$pull:{followers:follower}}),
+            ])
+            return res.status(200).json({
+                message:"Unfollow Successfully",
+                success:true
+            })
+        } else {
+            await Promise.all([
+                User.updateOne({_id:follower}, {$push:{following:followee}}),
+                User.updateOne({_id:followee}, {$push:{followers:follower}}),
+            ])
+            return res.status(200).json({
+                message:"Unfollow Successfully",
+                success:true
+            })
+        }
+    }
+    catch(error) {
+        console.log(error);
+    }
+}
+ 
